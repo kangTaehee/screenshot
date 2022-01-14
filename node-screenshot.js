@@ -5,7 +5,7 @@ var urls = [];
 const es = require('event-stream');
 var browser
 var data
-function getFileContents(fileName) {
+function arrayReadFile(fileName) {
 	const results = [];
 	const stream = fs.createReadStream(fileName)
 		.pipe(es.split())                 // default : \n으로 스플릿
@@ -28,18 +28,13 @@ function getFileContents(fileName) {
 		})
 	})
 }
-
-const file_name = process.argv[2]
-const dirmd = process.argv[3]
+const file_name = process.argv[2] //list.txt
+const dirmd = process.argv[3] // save folder
 // fs.mkdir(dirmd)
 if (!fs.existsSync(dirmd)) { fs.mkdirSync(dirmd); }
 
 (async () => {
-
-	// const file_name = "list.txt";
-
-
-	data = await getFileContents(file_name);
+	data = await arrayReadFile(file_name);
 	console.log('목록 : ', data);
 
 	browser = await puppeteer.launch();
@@ -47,23 +42,13 @@ if (!fs.existsSync(dirmd)) { fs.mkdirSync(dirmd); }
 		await dialog.dismiss();
 	});
 
-
-
-	// Promise.all(requestList.map(async (item) => {
-	// 	const result = await getRequest(item.id)
-	// 	console.log("result: ", result)
-	// }))
-
 	requestList = arryslice(data, 8)
-
-
-
 	console.time('as')
 	for (let index = 0; index < requestList.length; index++) {
 
 		try {
 			await Promise.all(requestList[index].map(async (index) => {
-				const result = await getRequest(index)
+				await screenshot(index)
 			}))
 			console.timeLog('as')
 		} catch (error) {
@@ -78,11 +63,17 @@ if (!fs.existsSync(dirmd)) { fs.mkdirSync(dirmd); }
 
 })();
 
-async function getRequest(index) {
+async function screenshot(index) {
 	const page = await browser.newPage();
 
 	const element = data[index];
-	console.log('star => ', element)
+	fileN = element.split('menuNo=')[1]
+
+	const regex = /[?.:/]/gi;
+	if(typeof fileN=='undefined') fileN=element.replace(regex, '_')
+
+	console.log(fileN)
+	
 	// takeScreenshot(element)
 
 	// 3. Navigate to URL
@@ -102,14 +93,13 @@ async function getRequest(index) {
 	// await page.setViewport ({width : 320, height : 480});
 	// await page.waitForNavigation({waitUntil: 'networkidle2'});
 	console.log(index)
-	fileN = element.split('=')[1]
-	// await console.log('filepathname :     ',filepathname)
+	
 	await page.screenshot({
-		path: dirmd + `/${fileN}${index}-320.png`,
+		path: dirmd + `/${fileN}-${index}-320.png`,
 		type: "png"
 	});
 
-	// await page.setViewport({ width: 750, height: 1200 });
+	await page.setViewport({ width: 750, height: 1200 });
 	dimensions = await page.evaluate(() => {
 		return {
 			width: 750,
@@ -117,16 +107,13 @@ async function getRequest(index) {
 			deviceScaleFactor: window.devicePixelRatio
 		};
 	});
-	// console.log(dimensions)
 	await page.setViewport(dimensions);
 	await page.screenshot({
-		path: dirmd + `/${fileN}${index}-768.png`,
+		path: dirmd + `/${fileN}-${index}-768.png`,
 		type: "png"
 	});
-	// 4. Take screenshot
-	// await page.setViewport({ width: 1200, height: 480 });
 	await page.screenshot({
-		path: dirmd + `/${fileN}${index}-full.png`,
+		path: dirmd + `/${fileN}-${index}-full.png`,
 		fullPage: true
 	});
 	await page.close();
