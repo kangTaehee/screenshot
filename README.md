@@ -12,4 +12,4 @@ node automation screenshot
 
 
 ## 작업할 사항
-screenshot-be.js + node-screenshot.js 합치기
+screenshot-be.js + node-screenshot.js + htmlAndCssValidation.js 합치기
